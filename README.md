@@ -33,43 +33,74 @@ BtoB向けの野菜配送ルート管理Webアプリケーションです。CSV�
 
 - **フロントエンド**: Next.js 15 (App Router), TypeScript, Tailwind CSS
 - **バックエンド**: Next.js Server Components
-- **データベース**: MySQL
+- **データベース**: MySQL (Docker)
 - **地図**: Leaflet, React Leaflet
 - **その他**: OpenStreetMap (Nominatim) for geocoding
 
 ## セットアップ
 
-### 1. 依存関係のインストール
+### 1. Dockerを使用したセットアップ（推奨）
 
 ```bash
-cd delivery-route-app
+# プロジェクトのセットアップ（初回のみ）
+make setup
+
+# 依存関係のインストール
 npm install
+
+# アプリケーションの起動
+npm run dev
 ```
 
-### 2. 環境変数の設定
+これで以下が自動的に行われます：
+- MySQLコンテナの起動
+- データベースとテーブルの作成
+- 環境変数ファイル（.env.local）の作成
 
-`.env.local`ファイルを作成し、以下の内容を設定してください：
+### 2. Docker操作用コマンド
+
+```bash
+# コンテナの起動
+make up
+
+# コンテナの停止
+make down
+
+# コンテナの再起動
+make restart
+
+# ログの確認
+make logs
+
+# MySQLシェルへのアクセス
+make db-shell
+
+# クリーンアップ（データも削除）
+make clean
+```
+
+### 3. 手動セットアップ（Dockerを使用しない場合）
+
+MySQLを別途インストールし、`.env.local`ファイルを作成：
 
 ```
 DB_HOST=localhost
-DB_USER=root
+DB_USER=your_user
 DB_PASSWORD=your_password
 DB_NAME=delivery_route_db
 DB_PORT=3306
 ```
 
-### 3. データベースの初期化
-
-アプリケーション起動後、以下のURLにアクセスしてデータベースを初期化：
-
-```
-http://localhost:3000/api/init-db
-```
-
-### 4. アプリケーションの起動
+その後、以下を実行：
 
 ```bash
+npm install
 npm run dev
+```
+
+アプリケーション起動後、データベースを初期化：
+```
+http://localhost:3000/api/init-db
 ```
 
 ## 使い方
@@ -85,4 +116,4 @@ npm run dev
 
 - ジオコーディングにはOpenStreetMapのNominatim APIを使用しています
 - 大量のデータをジオコーディングする際は、API制限に注意してください
-- MySQLサーバーが起動していることを確認してください
+- Dockerを使用する場合は、Docker DesktopまたはDocker Engineがインストールされている必要があります

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -74,6 +74,8 @@ export default function Map({ deliveryPoints, onUpdateCourse, onSelectPoints }: 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingCourse, setEditingCourse] = useState('');
   const mapRef = useRef<L.Map | null>(null);
+  
+  const iconCache = useMemo(() => new Map<string, L.DivIcon>(), []);
 
   useEffect(() => {
     if (mapRef.current && deliveryPoints.length > 0) {
@@ -114,15 +116,19 @@ export default function Map({ deliveryPoints, onUpdateCourse, onSelectPoints }: 
     return colors[index] || '#6b7280';
   };
 
-  const createCustomIcon = (courseNumber: string) => {
-    const color = getMarkerColor(courseNumber);
-    return L.divIcon({
-      html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${courseNumber}</div>`,
-      className: 'custom-marker',
-      iconSize: [30, 30],
-      iconAnchor: [15, 15],
-    });
-  };
+  const getOrCreateIcon = useCallback((courseNumber: string) => {
+    if (!iconCache.has(courseNumber)) {
+      const color = getMarkerColor(courseNumber);
+      const icon = L.divIcon({
+        html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${courseNumber}</div>`,
+        className: 'custom-marker',
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+      });
+      iconCache.set(courseNumber, icon);
+    }
+    return iconCache.get(courseNumber)!;
+  }, [iconCache]);
 
   return (
     <div className="relative h-full">
@@ -152,7 +158,7 @@ export default function Map({ deliveryPoints, onUpdateCourse, onSelectPoints }: 
             <Marker
               key={point.id}
               position={[point.latitude, point.longitude]}
-              icon={createCustomIcon(point.course_number)}
+              icon={getOrCreateIcon(point.course_number)}
               eventHandlers={{
                 click: () => setSelectedPoint(point),
               }}
